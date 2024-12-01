@@ -42,15 +42,27 @@ def displayRegisteredTrains(train_list, json_path):
                 json.dump(new_train_list, json_file)
                 
             st.rerun()
+            
+def convertToDict(origine, destination, date, heure):
+    
+    
+    trainDict = {"Origine": origine, "Destination": destination, "Date": "JJ Month AAAA", "Heure": "HH:MM"}
+    return trainDict
 
 def addTrain(train_list, json_path):
     with st.form("my_form"):
         
-        if st.form_submit_button("Ajouter"):
-            new_train_dict = convertToDict(datas)
+        origine = st.selectbox('Départ', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
+        destination = st.selectbox('Arrivée', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
+        date = st.date_input('Date', format='DD/MM/YYYY')
+        heure = st.time_input('Heure')
+        
+        if st.form_submit_button('Ajouter'):
+            new_train_dict = convertToDict(origine, destination, date, heure)
             train_list.append(new_train_dict)
             with open(json_path, 'w') as json_file:
                 json.dump(train_list, json_file)
+            st.rerun()
             
 
 def main():
