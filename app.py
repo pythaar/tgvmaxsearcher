@@ -3,6 +3,13 @@ import json
 import pandas as pd
 import streamlit as st
 
+STATION_NAME = ["Lille", "Lorient", "Paris Gare du Nord", "Paris Montparnasse", "Rennes"]
+
+def devPrint(to_print):
+    with open('tempLogs.log', 'a') as file:
+        file.write(to_print + '\n')
+        file.close()
+
 def createJsonIfNot(file_path):
     
     json_dict = [{"Origine": "Gare d origine", "Destination": "Gare d arrivee", "Date": "JJ Month AAAA", "Heure": "HH:MM"}]
@@ -45,24 +52,41 @@ def displayRegisteredTrains(train_list, json_path):
             
 def convertToDict(origine, destination, date, heure):
     
-    
-    trainDict = {"Origine": origine, "Destination": destination, "Date": "JJ Month AAAA", "Heure": "HH:MM"}
+    strheure = heure.strftime("%H:%M")
+    strdate = date.strftime("%d %B %Y")
+    trainDict = {"Origine": origine, "Destination": destination, "Date": strdate, "Heure": strheure}
+
     return trainDict
 
 def addTrain(train_list, json_path):
-    with st.form("my_form"):
+    
+    add_train = st.expander('Ajouter un train')
+    origine = add_train.selectbox('Départ', STATION_NAME)
+    destination = add_train.selectbox('Arrivée', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
+    date = add_train.date_input('Date', format='DD/MM/YYYY')
+    heure = add_train.time_input('Heure')
+    if add_train.button('Ajouter'):
+        new_train_dict = convertToDict(origine, destination, date, heure)
+        train_list.append(new_train_dict)
+        with open(json_path, 'w') as json_file:
+            json.dump(train_list, json_file)
+        st.rerun()
+    
+    #with st.form("my_form"):
         
-        origine = st.selectbox('Départ', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
-        destination = st.selectbox('Arrivée', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
-        date = st.date_input('Date', format='DD/MM/YYYY')
-        heure = st.time_input('Heure')
         
-        if st.form_submit_button('Ajouter'):
-            new_train_dict = convertToDict(origine, destination, date, heure)
-            train_list.append(new_train_dict)
-            with open(json_path, 'w') as json_file:
-                json.dump(train_list, json_file)
-            st.rerun()
+        # st.title('Ajouter un train')
+        # origine = st.selectbox('Départ', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
+        # destination = st.selectbox('Arrivée', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
+        # date = st.date_input('Date', format='DD/MM/YYYY')
+        # heure = st.time_input('Heure')
+        
+        # if st.form_submit_button('Ajouter'):
+        #     new_train_dict = convertToDict(origine, destination, date, heure)
+        #     train_list.append(new_train_dict)
+        #     with open(json_path, 'w') as json_file:
+        #         json.dump(train_list, json_file)
+        #     st.rerun()
             
 
 def main():
@@ -81,8 +105,10 @@ def main():
         
     displayRegisteredTrains(input_json, json_path)
     
-    if st.button('Ajouter un trajet'):
-        addTrain(input_json, json_path)
+    addTrain(input_json, json_path)
+    
+    if st.button('Check la dispo'):
+        st.warning('GROS RATIO 😭😭😭')
     
     
 if __name__ == "__main__":
