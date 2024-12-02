@@ -2,3 +2,4 @@
 appLogs.log
 *.json
 tempLogs.log
+nohup.out

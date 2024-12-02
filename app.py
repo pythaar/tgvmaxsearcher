@@ -1,9 +1,12 @@
 import os
 import json
+import requests
 import pandas as pd
 import streamlit as st
+from datetime import datetime, timedelta, date
 
 STATION_NAME = ["Lille", "Lorient", "Paris Gare du Nord", "Paris Montparnasse", "Rennes"]
+STATION_CODE = {"Lorient": "FRLRT", "Rennes": "FRRNS", "Paris Montparnasse": "FRPMO", "Paris Gare du Nord": "FRPNO", "Lille": "FRADJ"}
 
 def devPrint(to_print):
     with open('tempLogs.log', 'a') as file:
@@ -63,7 +66,7 @@ def addTrain(train_list, json_path):
     add_train = st.expander('Ajouter un train')
     origine = add_train.selectbox('Départ', STATION_NAME)
     destination = add_train.selectbox('Arrivée', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
-    date = add_train.date_input('Date', format='DD/MM/YYYY')
+    train_date = add_train.date_input('Date', format='DD/MM/YYYY')
     heure = add_train.time_input('Heure')
     if add_train.button('Ajouter'):
         new_train_dict = convertToDict(origine, destination, date, heure)
@@ -71,23 +74,96 @@ def addTrain(train_list, json_path):
         with open(json_path, 'w') as json_file:
             json.dump(train_list, json_file)
         st.rerun()
+
+def dateToAPI(date_input):
     
-    #with st.form("my_form"):
-        
-        
-        # st.title('Ajouter un train')
-        # origine = st.selectbox('Départ', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
-        # destination = st.selectbox('Arrivée', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
-        # date = st.date_input('Date', format='DD/MM/YYYY')
-        # heure = st.time_input('Heure')
-        
-        # if st.form_submit_button('Ajouter'):
-        #     new_train_dict = convertToDict(origine, destination, date, heure)
-        #     train_list.append(new_train_dict)
-        #     with open(json_path, 'w') as json_file:
-        #         json.dump(train_list, json_file)
-        #     st.rerun()
-            
+    input_format = "%d %B %Y"
+    output_format = "%Y-%m-%d"
+    date_datetime = datetime.strptime(date_input, input_format)
+    date_output = date_datetime.strftime(output_format)
+    #date_url = date_output[:4] + "%2F" + date_output[5:7] + "%2F" + date_output[8:]
+    
+    return date_datetime.strftime(output_format)
+
+def requestURL(origin, destination, train_date):
+    
+    prefixe = "https://data.sncf.com/api/explore/v2.1/catalog/datasets/tgvmax/records?order_by=heure_depart&limit=100"
+    url_origin = "&refine=origine_iata%3A" + "\"" + origin + "\""
+    url_destination = "&refine=destination_iata%3A" + "\"" + destination + "\""
+    url_date = "&refine=date%3A" + "\"" + train_date + "\""
+    final_url = prefixe + url_destination + url_origin + url_date
+    
+    return final_url
+
+def in30Mins(time_ref, time):
+    
+    time_format = "%H:%M"
+    ref_datetime = datetime.strptime(time_ref, time_format)
+    time_datetime = datetime.strptime(time, time_format)
+    
+    minus_range = ref_datetime - timedelta(minutes=30)
+    plus_range = ref_datetime + timedelta(minutes=30)
+    
+    return minus_range <= time_datetime <= plus_range
+  
+def requestTreatment(time_ref, request):
+    
+    considered_train = []
+    data = request.json()["results"]
+    for train in data:
+        if in30Mins(time_ref, train["heure_depart"]):
+            considered_train.append(train)
+    return considered_train
+
+def colorer_critere(valeur):
+    if valeur == "OUI":
+        return 'background-color: green'
+    elif valeur == "NON":
+        return 'background-color: red'
+    
+def displayTrains(train_list):
+    
+    for train in train_list:
+        st.write("De " + train["Origine"] + " à " + train["Destination"] + ", le " + train["Date"] + ":")
+        available_train = train["trainList"]
+        if available_train == None:
+            st.error("Error")
+        elif available_train:
+            df_train = pd.DataFrame(train["trainList"])
+            df_to_display = df_train[["heure_depart", "heure_arrivee", "od_happy_card"]]
+            df_to_display.rename(columns={"od_happy_card": "TGV MAX", "heure_depart": "Heure de départ", "heure_arrivee": "Heure d arrivée"}, inplace=True)
+            df_stylise = df_to_display.style.applymap(colorer_critere, subset=['TGV MAX'])
+            st.dataframe(df_stylise, hide_index=True)
+        else:
+            st.warning("No train arround " + train["Heure"])
+
+def checkTrains(train_list):
+    
+    for train in train_list:
+        train_date = dateToAPI(train["Date"])
+        url = requestURL(STATION_CODE[train["Origine"]], STATION_CODE[train["Destination"]], train_date)
+        request = requests.get(url)
+        if request.status_code == 200:
+            train["trainList"] = requestTreatment(train["Heure"], request)
+        else:
+            train["trainList"] = None
+    
+    displayTrains(train_list)
+
+def checkUpdate():
+    
+    yesterday = date.today() - timedelta(days=1)
+    formated_yesterday = yesterday.strftime("%Y-%m-%d")
+    url = "https://data.sncf.com/api/explore/v2.1/catalog/datasets/tgvmax/records?limit=100&refine=date%3A" + "\"" + formated_yesterday + "\""
+    request = requests.get(url)
+    if request.status_code == 200:
+        if request.json()["total_count"] == 0:
+            st.success("La database est update")
+        else:
+            st.warning("La databse n'est pas à jour")
+    else:
+        st.error("Erreur lors du check d'update")
+    
 
 def main():
     st.title('TGV Max Searcher')
@@ -108,7 +184,9 @@ def main():
     addTrain(input_json, json_path)
     
     if st.button('Check la dispo'):
-        st.warning('GROS RATIO 😭😭😭')
+        checkUpdate()
+        checkTrains(input_json)
+        #st.warning('GROS RATIO 😭😭😭')
     
     
 if __name__ == "__main__":
