@@ -69,7 +69,7 @@ def addTrain(train_list, json_path):
     train_date = add_train.date_input('Date', format='DD/MM/YYYY')
     heure = add_train.time_input('Heure')
     if add_train.button('Ajouter'):
-        new_train_dict = convertToDict(origine, destination, date, heure)
+        new_train_dict = convertToDict(origine, destination, train_date, heure)
         train_list.append(new_train_dict)
         with open(json_path, 'w') as json_file:
             json.dump(train_list, json_file)
