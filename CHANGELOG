@@ -1,3 +1,6 @@
+R0.1.2 - 12/15/2024
+ - Now check is the date is in TGV MAX range
+
 R0.1.1 - 12/06/2024
  - Bug fixe on add train function
 

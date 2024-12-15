@@ -101,8 +101,8 @@ def in30Mins(time_ref, time):
     ref_datetime = datetime.strptime(time_ref, time_format)
     time_datetime = datetime.strptime(time, time_format)
     
-    minus_range = ref_datetime - timedelta(minutes=30)
-    plus_range = ref_datetime + timedelta(minutes=30)
+    minus_range = ref_datetime - timedelta(minutes=60)
+    plus_range = ref_datetime + timedelta(minutes=60)
     
     return minus_range <= time_datetime <= plus_range
   
@@ -124,10 +124,9 @@ def colorer_critere(valeur):
 def displayTrains(train_list):
     
     for train in train_list:
-        st.write("De " + train["Origine"] + " à " + train["Destination"] + ", le " + train["Date"] + ":")
         available_train = train["trainList"]
         if available_train == None:
-            st.error("Error")
+            pass
         elif available_train:
             df_train = pd.DataFrame(train["trainList"])
             df_to_display = df_train[["heure_depart", "heure_arrivee", "od_happy_card"]]
@@ -137,14 +136,33 @@ def displayTrains(train_list):
         else:
             st.warning("No train arround " + train["Heure"])
 
+def checkDate(date):
+    
+    url = "https://data.sncf.com/api/explore/v2.1/catalog/datasets/tgvmax/records?limit=100&refine=date%3A" + "\"" + date + "\""
+    request = requests.get(url)
+    if request.status_code == 200:
+        if request.json()["total_count"] == 0:
+            st.warning("La date indiqué n'est pas dans la range TGV MAX")
+            return False
+        else:
+            return True
+    else:
+        st.error("Erreur lors du check d'update")
+        return False
+
 def checkTrains(train_list):
     
     for train in train_list:
+        st.write("De " + train["Origine"] + " à " + train["Destination"] + ", le " + train["Date"] + ":")
         train_date = dateToAPI(train["Date"])
-        url = requestURL(STATION_CODE[train["Origine"]], STATION_CODE[train["Destination"]], train_date)
-        request = requests.get(url)
-        if request.status_code == 200:
-            train["trainList"] = requestTreatment(train["Heure"], request)
+        date_ok = checkDate(train_date)
+        if date_ok:
+            url = requestURL(STATION_CODE[train["Origine"]], STATION_CODE[train["Destination"]], train_date)
+            request = requests.get(url)
+            if request.status_code == 200:
+                train["trainList"] = requestTreatment(train["Heure"], request)
+            else:
+                train["trainList"] = None
         else:
             train["trainList"] = None
     
@@ -160,7 +178,7 @@ def checkUpdate():
         if request.json()["total_count"] == 0:
             st.success("La database est update")
         else:
-            st.warning("La databse n'est pas à jour")
+            st.warning("La database n'est pas à jour")
     else:
         st.error("Erreur lors du check d'update")
     
@@ -186,7 +204,6 @@ def main():
     if st.button('Check la dispo'):
         checkUpdate()
         checkTrains(input_json)
-        #st.warning('GROS RATIO 😭😭😭')
     
     
 if __name__ == "__main__":
