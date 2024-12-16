@@ -9,7 +9,8 @@ STATION_NAME = ["Lille", "Lorient", "Paris Gare du Nord", "Paris Montparnasse", 
 STATION_CODE = {"Lorient": "FRLRT", "Rennes": "FRRNS", "Paris Montparnasse": "FRPMO", "Paris Gare du Nord": "FRPNO", "Lille": "FRADJ"}
 
 def devPrint(to_print):
-    with open('tempLogs.log', 'a') as file:
+    log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tempLogs.log')
+    with open(log_path, 'a') as file:
         file.write(to_print + '\n')
         file.close()
 
@@ -191,7 +192,8 @@ def main():
     st.subheader('Liste des trains à chercher')
     
     #Make sure json exists
-    json_path = 'trainsToFind.json'
+    workdir = os.path.dirname(os.path.abspath(__file__))
+    json_path = os.path.join(workdir, 'trainsToFind.json')
     createJsonIfNot(json_path)
     
     with open(json_path, 'r') as json_file:
