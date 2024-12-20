@@ -122,20 +122,19 @@ def colorer_critere(valeur):
     elif valeur == "NON":
         return 'background-color: red'
     
-def displayTrains(train_list):
+def displayTrains(train):
     
-    for train in train_list:
-        available_train = train["trainList"]
-        if available_train == None:
-            pass
-        elif available_train:
-            df_train = pd.DataFrame(train["trainList"])
-            df_to_display = df_train[["heure_depart", "heure_arrivee", "od_happy_card"]]
-            df_to_display.rename(columns={"od_happy_card": "TGV MAX", "heure_depart": "Heure de départ", "heure_arrivee": "Heure d arrivée"}, inplace=True)
-            df_stylise = df_to_display.style.applymap(colorer_critere, subset=['TGV MAX'])
-            st.dataframe(df_stylise, hide_index=True)
-        else:
-            st.warning("No train arround " + train["Heure"])
+    available_train = train["trainList"]
+    if available_train == None:
+        pass
+    elif available_train:
+        df_train = pd.DataFrame(train["trainList"])
+        df_to_display = df_train[["heure_depart", "heure_arrivee", "od_happy_card"]]
+        df_to_display.rename(columns={"od_happy_card": "TGV MAX", "heure_depart": "Heure de départ", "heure_arrivee": "Heure d arrivée"}, inplace=True)
+        df_stylise = df_to_display.style.applymap(colorer_critere, subset=['TGV MAX'])
+        st.dataframe(df_stylise, hide_index=True)
+    else:
+        st.warning("No train arround " + train["Heure"])
 
 def checkDate(date):
     
@@ -167,7 +166,7 @@ def checkTrains(train_list):
         else:
             train["trainList"] = None
     
-    displayTrains(train_list)
+        displayTrains(train)
 
 def checkUpdate():
     
