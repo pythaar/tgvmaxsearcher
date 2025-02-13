@@ -3,3 +3,5 @@ appLogs.log
 *.json
 tempLogs.log
 nohup.out
+IDs.py
+__pycache__

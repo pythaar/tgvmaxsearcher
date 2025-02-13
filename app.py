@@ -3,10 +3,11 @@ import json
 import requests
 import pandas as pd
 import streamlit as st
+from functions import getDbStatus
 from datetime import datetime, timedelta, date
 
-STATION_NAME = ["Lille", "Lorient", "Paris Gare du Nord", "Paris Montparnasse", "Rennes"]
-STATION_CODE = {"Lorient": "FRLRT", "Rennes": "FRRNS", "Paris Montparnasse": "FRPMO", "Paris Gare du Nord": "FRPNO", "Lille": "FRADJ"}
+STATION_NAME = ["Lille", "Lorient", "Paris Gare du Nord", "Paris Montparnasse", "Rennes", "Lyon Part-Dieu", "Paris Gare de Lyon"]
+STATION_CODE = {"Lorient": "FRLRT", "Rennes": "FRRNS", "Paris Montparnasse": "FRPMO", "Paris Gare du Nord": "FRPNO", "Lille": "FRADJ", "Lyon Part-Dieu": "FRLPD", "Paris Gare de Lyon":"FRPLY"}
 
 def devPrint(to_print):
     log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tempLogs.log')
@@ -66,7 +67,7 @@ def addTrain(train_list, json_path):
     
     add_train = st.expander('Ajouter un train')
     origine = add_train.selectbox('Départ', STATION_NAME)
-    destination = add_train.selectbox('Arrivée', ("Lille", "Paris Montparnasse", "Paris Gare du Nord", "Lorient", "Rennes"))
+    destination = add_train.selectbox('Arrivée', STATION_NAME)
     train_date = add_train.date_input('Date', format='DD/MM/YYYY')
     heure = add_train.time_input('Heure')
     if add_train.button('Ajouter'):
@@ -170,18 +171,13 @@ def checkTrains(train_list):
 
 def checkUpdate():
     
-    yesterday = date.today() - timedelta(days=1)
-    formated_yesterday = yesterday.strftime("%Y-%m-%d")
-    url = "https://data.sncf.com/api/explore/v2.1/catalog/datasets/tgvmax/records?limit=100&refine=date%3A" + "\"" + formated_yesterday + "\""
-    request = requests.get(url)
-    if request.status_code == 200:
-        if request.json()["total_count"] == 0:
-            st.success("La database est update")
-        else:
-            st.warning("La database n'est pas à jour")
+    dbStatus = getDbStatus()
+    if dbStatus == True:
+        st.success("La database est update")
+    elif dbStatus == False:
+        st.warning("La database n'est pas à jour")
     else:
-        st.error("Erreur lors du check d'update")
-    
+        st.error("Erreur lors du check d'update") 
 
 def main():
     st.title('TGV Max Searcher')
