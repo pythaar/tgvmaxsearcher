@@ -5,3 +5,4 @@ tempLogs.log
 nohup.out
 IDs.py
 __pycache__
+*.passwd

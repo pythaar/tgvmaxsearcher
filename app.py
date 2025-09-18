@@ -9,6 +9,17 @@ from datetime import datetime, timedelta, date
 STATION_NAME = ["Lille", "Lorient", "Paris Gare du Nord", "Paris Montparnasse", "Rennes", "Lyon Part-Dieu", "Paris Gare de Lyon"]
 STATION_CODE = {"Lorient": "FRLRT", "Rennes": "FRRNS", "Paris Montparnasse": "FRPMO", "Paris Gare du Nord": "FRPNO", "Lille": "FRADJ", "Lyon Part-Dieu": "FRLPD", "Paris Gare de Lyon":"FRPLY"}
 
+def checkPasswd(userpasswd):
+    
+    with open('user.passwd', 'r') as file:
+        stored_password = file.read().strip()
+        print(stored_password)
+    
+    if userpasswd == stored_password:
+        return False
+    else:
+        return True
+
 def devPrint(to_print):
     log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tempLogs.log')
     with open(log_path, 'a') as file:
@@ -22,7 +33,7 @@ def createJsonIfNot(file_path):
         with open(file_path, 'w') as json_file:
             json.dump(json_dict, json_file)
             
-def displayRegisteredTrains(train_list, json_path):
+def displayRegisteredTrains(train_list, json_path, apply_btn_state):
     
     if not train_list:
         st.write('Pas de train enregistré')
@@ -44,7 +55,7 @@ def displayRegisteredTrains(train_list, json_path):
                             )
         
         
-        if st.button('Supprimer'):
+        if st.button('Supprimer', disabled=apply_btn_state):
             trains_to_keep = updated_train_df.index[updated_train_df['Supprimer'] == False].tolist()
             new_train_list = []
             for index_train in trains_to_keep:
@@ -63,14 +74,14 @@ def convertToDict(origine, destination, date, heure):
 
     return trainDict
 
-def addTrain(train_list, json_path):
+def addTrain(train_list, json_path, apply_btn_state):
     
     add_train = st.expander('Ajouter un train')
     origine = add_train.selectbox('Départ', STATION_NAME)
     destination = add_train.selectbox('Arrivée', STATION_NAME)
     train_date = add_train.date_input('Date', format='DD/MM/YYYY')
     heure = add_train.time_input('Heure')
-    if add_train.button('Ajouter'):
+    if add_train.button('Ajouter', disabled = apply_btn_state):
         new_train_dict = convertToDict(origine, destination, train_date, heure)
         train_list.append(new_train_dict)
         with open(json_path, 'w') as json_file:
@@ -193,10 +204,13 @@ def main():
     
     with open(json_path, 'r') as json_file:
         input_json = json.load(json_file)
-        
-    displayRegisteredTrains(input_json, json_path)
     
-    addTrain(input_json, json_path)
+    userpasswd = st.text_input('Password', type='password')
+    apply_btn_state = checkPasswd(userpasswd)
+    
+    displayRegisteredTrains(input_json, json_path, apply_btn_state)
+    
+    addTrain(input_json, json_path, apply_btn_state)
     
     if st.button('Check la dispo'):
         checkUpdate()
