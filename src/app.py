@@ -1,39 +1,23 @@
 import os
+import sys
 import json
 import requests
 import pandas as pd
 import streamlit as st
-from functions import getDbStatus
+GIT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(GIT_PATH)
+from config import APP_PASSWORD
+from src.functions import getDbStatus
+from src.file_manipulation import openJson, createJsonIfNot
 from datetime import datetime, timedelta, date
-
-STATION_NAME = ["Lille", "Lorient", "Paris Gare du Nord", "Paris Montparnasse", "Rennes", "Lyon Part-Dieu", "Paris Gare de Lyon"]
-STATION_CODE = {"Lorient": "FRLRT", "Rennes": "FRRNS", "Paris Montparnasse": "FRPMO", "Paris Gare du Nord": "FRPNO", "Lille": "FRADJ", "Lyon Part-Dieu": "FRLPD", "Paris Gare de Lyon":"FRPLY"}
-
-def checkPasswd(userpasswd):
-    
-    with open('user.passwd', 'r') as file:
-        stored_password = file.read().strip()
-        print(stored_password)
-    
-    if userpasswd == stored_password:
-        return False
-    else:
-        return True
 
 def devPrint(to_print):
     log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tempLogs.log')
     with open(log_path, 'a') as file:
         file.write(to_print + '\n')
         file.close()
-
-def createJsonIfNot(file_path):
-    
-    json_dict = [{"Origine": "Gare d origine", "Destination": "Gare d arrivee", "Date": "JJ Month AAAA", "Heure": "HH:MM"}]
-    if not os.path.exists(file_path):
-        with open(file_path, 'w') as json_file:
-            json.dump(json_dict, json_file)
             
-def displayRegisteredTrains(train_list, json_path, apply_btn_state):
+def displayRegisteredTrains(train_list, train_to_find_path, apply_btn_state):
     
     if not train_list:
         st.write('Pas de train enregistré')
@@ -61,7 +45,7 @@ def displayRegisteredTrains(train_list, json_path, apply_btn_state):
             for index_train in trains_to_keep:
                 new_train_list.append(train_list[index_train])
                 
-            with open(json_path, 'w') as json_file:
+            with open(train_to_find_path, 'w') as json_file:
                 json.dump(new_train_list, json_file)
                 
             st.rerun()
@@ -74,11 +58,12 @@ def convertToDict(origine, destination, date, heure):
 
     return trainDict
 
-def addTrain(train_list, json_path, apply_btn_state):
+def addTrain(train_list, json_path, apply_btn_state, station_code):
     
+    station_name = list(station_code.keys())
     add_train = st.expander('Ajouter un train')
-    origine = add_train.selectbox('Départ', STATION_NAME)
-    destination = add_train.selectbox('Arrivée', STATION_NAME)
+    origine = add_train.selectbox('Départ', station_name)
+    destination = add_train.selectbox('Arrivée', station_name)
     train_date = add_train.date_input('Date', format='DD/MM/YYYY')
     heure = add_train.time_input('Heure')
     if add_train.button('Ajouter', disabled = apply_btn_state):
@@ -162,14 +147,14 @@ def checkDate(date):
         st.error("Erreur lors du check d'update")
         return False
 
-def checkTrains(train_list):
+def checkTrains(train_list, station_code):
     
     for train in train_list:
         st.write("De " + train["Origine"] + " à " + train["Destination"] + ", le " + train["Date"] + ":")
         train_date = dateToAPI(train["Date"])
         date_ok = checkDate(train_date)
         if date_ok:
-            url = requestURL(STATION_CODE[train["Origine"]], STATION_CODE[train["Destination"]], train_date)
+            url = requestURL(station_code[train["Origine"]], station_code[train["Destination"]], train_date)
             request = requests.get(url)
             if request.status_code == 200:
                 train["trainList"] = requestTreatment(train["Heure"], request)
@@ -191,30 +176,33 @@ def checkUpdate():
         st.error("Erreur lors du check d'update") 
 
 def main():
+    """Main app function
+    """
+    #Titles
     st.title('TGV Max Searcher')
     st.subheader('By Jules aka Pytpyt')
     st.divider()
-
     st.subheader('Liste des trains à chercher')
     
-    #Make sure json exists
-    workdir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(workdir, 'trainsToFind.json')
-    createJsonIfNot(json_path)
+    #Open train to find
+    db_path = os.path.join(GIT_PATH, 'database')
+    train_to_find_path = os.path.join(db_path, 'trainsToFind.json')
+    stationCode_path = os.path.join(db_path, 'stationCode.json')
+    createJsonIfNot(train_to_find_path, [])
+    train_list = openJson(train_to_find_path)
+    station_code = openJson(stationCode_path)
     
-    with open(json_path, 'r') as json_file:
-        input_json = json.load(json_file)
-    
+    #Check password
     userpasswd = st.text_input('Password', type='password')
-    apply_btn_state = checkPasswd(userpasswd)
+    apply_btn_state = not (userpasswd == APP_PASSWORD)
     
-    displayRegisteredTrains(input_json, json_path, apply_btn_state)
+    displayRegisteredTrains(train_list, train_to_find_path, apply_btn_state)
     
-    addTrain(input_json, json_path, apply_btn_state)
+    addTrain(train_list, train_to_find_path, apply_btn_state, station_code)
     
     if st.button('Check la dispo'):
         checkUpdate()
-        checkTrains(input_json)
+        checkTrains(train_list, station_code)
     
     
 if __name__ == "__main__":

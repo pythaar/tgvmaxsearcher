@@ -1,8 +1,4 @@
 .env/
-appLogs.log
-*.json
-tempLogs.log
-nohup.out
-IDs.py
+database/trainsToFind.json
 __pycache__
-*.passwd
+config.py

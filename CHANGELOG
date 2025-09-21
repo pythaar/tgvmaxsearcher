@@ -1,11 +1,17 @@
-R0.1.2 - 12/15/2024
+R0.3.0 - 21/09/2025
+ - Reorginize files
+
+R0.2.0 - 18/09/2025
+ - Add passwd
+ 
+R0.1.2 - 15/12/2024
  - Now check is the date is in TGV MAX range
 
-R0.1.1 - 12/06/2024
+R0.1.1 - 06/12/2024
  - Bug fixe on add train function
 
-R0.1.0 - 12/02/2024
+R0.1.0 - 02/12/2024
  - Beta version, works but code not well structured, and app really poor
 
-R0.0.1 - 12/01/2024
+R0.0.1 - 01/12/2024
  - Initial commit
