@@ -13,7 +13,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environement: env
+    environment: env
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
