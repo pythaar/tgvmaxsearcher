@@ -4,14 +4,33 @@ on:
   push:
     branches:
       - main
+  
+env:
+  SERVER_HOST: ${{ secrets.SERVER_HOST }}
+  SERVER_USER: ${{ secrets.SERVER_USER }}
+  SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    environement: env
     steps:
-    - name: Affiche les secrets (debug)
-      run: |
-        echo "Host: ${{ secrets.SERVER_HOST }}"
-        echo "User: ${{ secrets.SERVER_USER }}"
-          echo "Connexion réussie !"
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build Docker image
+      run: docker build -t tgvmaxsearcher .
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: $SERVER_HOST
+        username: $SERVER_USER
+        key: $SERVER_SSH_KEY
+        script: |
+          cd /home/ubuntu/webApp/tgvmaxsearcher
+          git pull origin main
+          docker build -t tgvmaxsearcher .
+          docker stop tgvmaxsearcher || true
+          docker rm tgvmaxsearcher || true
+          docker run -d -p 127.0.0.1:8501:8501 -v /home/ubuntu/webApp/tgvmaxsearcher/config.py:/app/config.py --name tgvmaxsearcher tgvmaxsearcher
