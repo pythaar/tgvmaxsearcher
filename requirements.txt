@@ -1,5 +1,5 @@
-streamlit
-plotly
-pandas
-numpy
-discord.py
+streamlit==1.40.2
+plotly==5.24.1
+pandas==2.2.3
+numpy==2.1.3
+discord.py==2.4.0
