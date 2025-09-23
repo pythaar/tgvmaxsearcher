@@ -179,7 +179,7 @@ def main():
     """Main app function
     """
     #Titles
-    st.title('TGV Max Searcher')
+    st.title('TGV Max Searcher -- IN DEV')
     st.subheader('By Jules aka Pytpyt')
     st.divider()
     st.subheader('Liste des trains à chercher')
@@ -203,8 +203,6 @@ def main():
     if st.button('Check la dispo'):
         checkUpdate()
         checkTrains(train_list, station_code)
-        
-    st.text('To be done...')
     
     
 if __name__ == "__main__":
