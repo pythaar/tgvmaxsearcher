@@ -18,4 +18,4 @@ jobs:
         key: ${{ secrets.SERVER_SSH_KEY }}
         port: ${{ secrets.SERVER_PORT }}
         script: |
-          echo "Connexion SSH réussie !"
+          echo "Connexion SSH réussie on port ${{ secrets.SERVER_PORT }} !"
