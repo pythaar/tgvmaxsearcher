@@ -203,6 +203,8 @@ def main():
     if st.button('Check la dispo'):
         checkUpdate()
         checkTrains(train_list, station_code)
+        
+    st.text('To be done...')
     
     
 if __name__ == "__main__":
