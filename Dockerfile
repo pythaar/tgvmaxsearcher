@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone git@github.com:pythaar/tgvmaxsearcher.git .
+RUN git clone https://github.com/pythaar/tgvmaxsearcher.git .
 
 RUN pip3 install -r requirements.txt
 
