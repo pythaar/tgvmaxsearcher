@@ -179,7 +179,7 @@ def main():
     """Main app function
     """
     #Titles
-    st.title('TGV Max Searcher -- IN DEV')
+    st.title('TGV Max Searcher')
     st.subheader('By Jules aka Pytpyt')
     st.divider()
     st.subheader('Liste des trains à chercher')

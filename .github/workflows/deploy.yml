@@ -22,7 +22,7 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
-          cd /home/ubuntu/webApp/tgvmaxsearcher
+          cd /home/ubuntu/webApp/deploy/tgvmaxsearcher
           git pull origin main
           docker build -t tgvmaxsearcher .
           docker stop tgvmaxsearcher || true
