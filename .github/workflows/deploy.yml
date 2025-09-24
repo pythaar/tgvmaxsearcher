@@ -24,7 +24,7 @@ jobs:
         script: |
           cd /home/ubuntu/webApp/deploy/tgvmaxsearcher
           GIT_SSH_COMMAND="ssh -i ~/.ssh/github_ci_key" git pull origin main
-          docker build -t tgvmaxsearcher .
+          docker build --no-cache -t tgvmaxsearcher .
           docker stop tgvmaxsearcher || true
           docker rm tgvmaxsearcher || true
           docker run -d -p 127.0.0.1:8501:8501 -v /home/ubuntu/webApp/tgvmaxsearcher/config.py:/app/config.py --name tgvmaxsearcher tgvmaxsearcher
