@@ -180,7 +180,7 @@ def main():
     """
     #Titles
     st.title('TGV Max Searcher')
-    st.subheader('By Jules aka Pytpyt')
+    st.subheader('By Jules aka Pytpyt -- TEST DEV')
     st.divider()
     st.subheader('Liste des trains à chercher')
     

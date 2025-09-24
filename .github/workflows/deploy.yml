@@ -23,7 +23,7 @@ jobs:
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
           cd /home/ubuntu/webApp/deploy/tgvmaxsearcher
-          git pull origin main
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/github_ci_key" git pull origin main
           docker build -t tgvmaxsearcher .
           docker stop tgvmaxsearcher || true
           docker rm tgvmaxsearcher || true
