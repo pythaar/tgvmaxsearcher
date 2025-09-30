@@ -11,16 +11,11 @@ from src.functions import getDbStatus
 from src.file_manipulation import openJson, createJsonIfNot
 from src.db_manager import TGVMaxDB
 from datetime import datetime, timedelta, date
-
-def devPrint(to_print):
-    log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tempLogs.log')
-    with open(log_path, 'a') as file:
-        file.write(to_print + '\n')
-        file.close()
             
 def displayRegisteredTrains(train_list, db, apply_btn_state):
     
-    if not train_list:
+    n_trains = len(train_list)
+    if n_trains == 0:
         st.write('Pas de train enregistré')
     else:
         columns_name = train_list.columns

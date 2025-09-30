@@ -10,10 +10,10 @@ class TGVMaxDB:
     def init_table(self):
         """Create the table if it does not exists
         """
-        with self.engine.connect() as conn:
+        with self.engine.begin() as conn:
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS tgvmax (
-                    id SERIAL PRIMARY KEY,
+                    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                     origin TEXT,
                     destination TEXT,
                     date DATE,
@@ -26,13 +26,13 @@ class TGVMaxDB:
         today = date.today()
         query = """
             SELECT * FROM tgvmax
-            WHERE trouve IS NULL;
+            WHERE found IS NULL OR date >= %(today)s;
         """
         df = pd.read_sql(query, self.engine, params={"today": today})
         return df
 
     def add_train(self, origin, destination, date, hour, found=None):
-        with self.engine.connect() as conn:
+        with self.engine.begin() as conn:
             conn.execute(text("""
                 INSERT INTO tgvmax (origin, destination, date, hour, found)
                 VALUES (:origin, :destination, :date, :hour, :found);
@@ -46,11 +46,11 @@ class TGVMaxDB:
 
     def update_cell(self, df, row_index, column_name):
         row_id = df.iloc[row_index]["id"]
-        new_value = df.ilow[row_index][column_name]
-        with self.engine.connect() as conn:
+        new_value = df.iloc[row_index][column_name]
+        with self.engine.begin() as conn:
             conn.execute(text(f"""
                 UPDATE tgvmax SET {column_name} = :new_value WHERE id = :row_id;
             """), {
                 "new_value": new_value,
-                "row_id": row_id
+                "row_id": int(row_id)
             })
