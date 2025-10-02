@@ -44,9 +44,7 @@ class TGVMaxDB:
                 "found": found
             })
 
-    def update_cell(self, df, row_index, column_name):
-        row_id = df.iloc[row_index]["id"]
-        new_value = df.iloc[row_index][column_name]
+    def update_cell(self, column_name, row_id, new_value):
         with self.engine.begin() as conn:
             conn.execute(text(f"""
                 UPDATE tgvmax SET {column_name} = :new_value WHERE id = :row_id;

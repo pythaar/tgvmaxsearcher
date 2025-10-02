@@ -18,13 +18,14 @@ def displayRegisteredTrains(train_list, db, apply_btn_state):
     if n_trains == 0:
         st.write('Pas de train enregistré')
     else:
-        columns_name = train_list.columns
+        train_list['found'] = train_list['found'].astype(str)
+        to_disable = train_list.columns.to_list()
+        print(to_disable)
+        to_disable.remove('found')
         updated_train_df = st.data_editor(
                                 train_list,
                                 column_config={
                                                 "found": st.column_config.SelectboxColumn(
-                                                    "Research state",
-                                                    help="Select the sate of the train",
                                                     width="medium",
                                                     options=[
                                                         "",
@@ -34,17 +35,17 @@ def displayRegisteredTrains(train_list, db, apply_btn_state):
                                                     required=True,
                                                 )
                                             },
-                                #disabled=columns_name,
+                                disabled=to_disable,
                                 hide_index=True,
                             )
-        
         
         if st.button('Update', disabled=apply_btn_state):
             #Ajouter les trains avec Found true ou False
             for i_row, row in updated_train_df.iterrows():
-                if row['found'] == 'True' or row['found'] == 'False':
-                    db.update_cell(updated_train_df, i_row, 'found') 
-                
+                if row['found'] == 'True':
+                    db.update_cell('found', row['id'], True)
+                elif row['found'] == 'False':
+                    db.update_cell('found', row['id'], False)
             st.rerun()
 
 def addTrain(train_list, db, apply_btn_state, station_code):
