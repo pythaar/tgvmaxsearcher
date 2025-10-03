@@ -1,3 +1,6 @@
+R2.0.0 - 02/10/2025
+ - Now works with a SQL database
+
 R1.0.0 - 22/09/2025
  - Launch with a docker
  - Add a github pipeline

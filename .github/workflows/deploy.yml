@@ -27,4 +27,4 @@ jobs:
           docker build --no-cache -t tgvmaxsearcher .
           docker stop tgvmaxsearcher || true
           docker rm tgvmaxsearcher || true
-          docker run -d -p 127.0.0.1:8501:8501 -v /home/ubuntu/webApp/tgvmaxsearcher/config.py:/app/config.py --name tgvmaxsearcher tgvmaxsearcher
+          docker run -d -p 127.0.0.1:8501:8501 -v /home/ubuntu/webApp/deploy/configFiles/config_tgvmaxsearcher.py:/app/config.py --name tgvmaxsearcher tgvmaxsearcher

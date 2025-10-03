@@ -6,71 +6,58 @@ import pandas as pd
 import streamlit as st
 GIT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(GIT_PATH)
-from config import APP_PASSWORD
+from config import APP_PASSWORD, DB_URL
 from src.functions import getDbStatus
 from src.file_manipulation import openJson, createJsonIfNot
+from src.db_manager import TGVMaxDB
 from datetime import datetime, timedelta, date
-
-def devPrint(to_print):
-    log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tempLogs.log')
-    with open(log_path, 'a') as file:
-        file.write(to_print + '\n')
-        file.close()
             
-def displayRegisteredTrains(train_list, train_to_find_path, apply_btn_state):
+def displayRegisteredTrains(train_list, db, apply_btn_state):
     
-    if not train_list:
+    n_trains = len(train_list)
+    if n_trains == 0:
         st.write('Pas de train enregistré')
     else:
-        train_df = pd.DataFrame(train_list)
-        columns_name = train_df.columns
-        train_df["Supprimer"] = False
+        train_list['found'] = train_list['found'].astype(str)
+        to_disable = train_list.columns.to_list()
+        print(to_disable)
+        to_disable.remove('found')
         updated_train_df = st.data_editor(
-                                train_df,
+                                train_list,
                                 column_config={
-                                    "Supprimer": st.column_config.CheckboxColumn(
-                                        "Supprimer",
-                                        help="Supprimer un train",
-                                        default=False,
-                                    )
-                                },
-                                disabled=columns_name,
+                                                "found": st.column_config.SelectboxColumn(
+                                                    width="medium",
+                                                    options=[
+                                                        "",
+                                                        "True",
+                                                        "False",
+                                                    ],
+                                                    required=True,
+                                                )
+                                            },
+                                disabled=to_disable,
                                 hide_index=True,
                             )
         
-        
-        if st.button('Supprimer', disabled=apply_btn_state):
-            trains_to_keep = updated_train_df.index[updated_train_df['Supprimer'] == False].tolist()
-            new_train_list = []
-            for index_train in trains_to_keep:
-                new_train_list.append(train_list[index_train])
-                
-            with open(train_to_find_path, 'w') as json_file:
-                json.dump(new_train_list, json_file)
-                
+        if st.button('Update', disabled=apply_btn_state):
+            #Ajouter les trains avec Found true ou False
+            for i_row, row in updated_train_df.iterrows():
+                if row['found'] == 'True':
+                    db.update_cell('found', row['id'], True)
+                elif row['found'] == 'False':
+                    db.update_cell('found', row['id'], False)
             st.rerun()
-            
-def convertToDict(origine, destination, date, heure):
-    
-    strheure = heure.strftime("%H:%M")
-    strdate = date.strftime("%d %B %Y")
-    trainDict = {"Origine": origine, "Destination": destination, "Date": strdate, "Heure": strheure}
 
-    return trainDict
-
-def addTrain(train_list, json_path, apply_btn_state, station_code):
+def addTrain(train_list, db, apply_btn_state, station_code):
     
     station_name = list(station_code.keys())
     add_train = st.expander('Ajouter un train')
-    origine = add_train.selectbox('Départ', station_name)
+    origin = add_train.selectbox('Départ', station_name)
     destination = add_train.selectbox('Arrivée', station_name)
     train_date = add_train.date_input('Date', format='DD/MM/YYYY')
     heure = add_train.time_input('Heure')
     if add_train.button('Ajouter', disabled = apply_btn_state):
-        new_train_dict = convertToDict(origine, destination, train_date, heure)
-        train_list.append(new_train_dict)
-        with open(json_path, 'w') as json_file:
-            json.dump(train_list, json_file)
+        db.add_train(origin, destination, train_date, heure.strftime("%H:%M"))
         st.rerun()
 
 def dateToAPI(date_input):
@@ -184,21 +171,21 @@ def main():
     st.divider()
     st.subheader('Liste des trains à chercher')
     
+    db = TGVMaxDB(DB_URL)
+    
     #Open train to find
     db_path = os.path.join(GIT_PATH, 'database')
-    train_to_find_path = os.path.join(db_path, 'trainsToFind.json')
     stationCode_path = os.path.join(db_path, 'stationCode.json')
-    createJsonIfNot(train_to_find_path, [])
-    train_list = openJson(train_to_find_path)
+    train_list = db.load_trains_to_search()
     station_code = openJson(stationCode_path)
     
     #Check password
     userpasswd = st.text_input('Password', type='password')
     apply_btn_state = not (userpasswd == APP_PASSWORD)
     
-    displayRegisteredTrains(train_list, train_to_find_path, apply_btn_state)
+    displayRegisteredTrains(train_list, db, apply_btn_state)
     
-    addTrain(train_list, train_to_find_path, apply_btn_state, station_code)
+    addTrain(train_list, db, apply_btn_state, station_code)
     
     if st.button('Check la dispo'):
         checkUpdate()
