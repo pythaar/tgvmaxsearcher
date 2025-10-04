@@ -165,13 +165,17 @@ def checkUpdate():
 def main():
     """Main app function
     """
+    
+    db = TGVMaxDB(DB_URL)
     #Titles
     st.title('TGV Max Searcher')
     st.subheader('By Jules aka Pytpyt')
     st.divider()
+    total_searched, total_found = db.count_total_and_found()
+    st.text(f'{total_found}/{total_searched} TGV Max found ({round(total_found/total_searched*100, 2)}%)')
+    st.divider()
     st.subheader('Liste des trains à chercher')
     
-    db = TGVMaxDB(DB_URL)
     
     #Open train to find
     db_path = os.path.join(GIT_PATH, 'database')
@@ -187,9 +191,9 @@ def main():
     
     addTrain(train_list, db, apply_btn_state, station_code)
     
-    if st.button('Check la dispo'):
+    """if st.button('Check la dispo'):
         checkUpdate()
-        checkTrains(train_list, station_code)
+        checkTrains(train_list, station_code)"""
     
     
 if __name__ == "__main__":
