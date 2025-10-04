@@ -1,3 +1,7 @@
+R2.1.0 - 04/10/2025
+ - Display the percentage of TGV MAX found
+ - The discord bot is now handled in another git
+
 R2.0.0 - 02/10/2025
  - Now works with a SQL database
 

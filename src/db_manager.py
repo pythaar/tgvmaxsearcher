@@ -21,6 +21,16 @@ class TGVMaxDB:
                     found BOOLEAN
                 );
             """))
+    def count_total_and_found(self):
+        with self.engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT 
+                    COUNT(*) AS total,
+                    COUNT(found) FILTER (WHERE found = TRUE) AS found_true
+                FROM tgvmax;
+            """))
+        row = result.fetchone()
+        return row[0], row[1]
 
     def load_trains_to_search(self):
         today = date.today()
