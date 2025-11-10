@@ -5,5 +5,7 @@
     "Paris Gare du Nord": "FRPNO", 
     "Lille": "FRADJ", 
     "Lyon Part-Dieu": "FRLPD", 
-    "Paris Gare de Lyon":"FRPLY"
+    "Paris Gare de Lyon":"FRPLY",
+    "Strasbourg": "FRAEG",
+    "Paris Gare de l Est": "FRPST"
 }
